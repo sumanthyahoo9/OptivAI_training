@@ -87,6 +87,7 @@ wandb/
 *.npy
 *.npz
 *.pkl
+*.png
 data/raw/
 data/processed/
 
