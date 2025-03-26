@@ -1,0 +1,123 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VSCode
+.vscode/
+
+# Model files
+models/
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+checkpoint*/
+runs/
+
+# Data files
+*.csv
+*.sqlite
+*.db
+logs/
+wandb/
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.pkl
+data/raw/
+data/processed/
+
+# EnergyPlus outputs
+output/
+*.eso
+*.mtr
+*.err
+*.eio
+*.end
+*.audit
+*.bnd
+*.dxf
+*.mtd
+*.rdd
+*.shd
+*.csv
+*.html
+*.idf
+*.epw
+!data/weather/*.epw
+!data/buildings/*.idf
+
+# Sensitive data
+credentials.json
+*.key
+*secret*
+*password*
+*api_key*
+*token*
+
+# OS specific
+.DS_Store
+Thumbs.db
