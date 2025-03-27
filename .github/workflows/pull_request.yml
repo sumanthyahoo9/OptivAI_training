@@ -1,0 +1,47 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy pytest pytest-cov
+        pip install -e .
+    - name: Check formatting
+      run: black --check .
+    - name: Lint with flake8
+      run: flake8 . --count --max-complexity=10 --statistics
+    - name: Type check with mypy
+      run: mypy optivai_training tests
+    - name: Run tests
+      run: |
+        pytest --cov=optivai_training tests/
+    - name: Check test coverage
+      run: |
+        pytest --cov=optivai_training --cov-fail-under=90 tests/
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    - name: Security scan
+      uses: snyk/actions/python@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
