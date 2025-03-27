@@ -61,7 +61,7 @@ dev = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["optivai_training", "read_data", "read_models"]
+packages = ["OptivAI_training", "read_data", "read_models"]
 
 [tool.black]
 line-length = 100
