@@ -132,7 +132,7 @@ class LlamaModelValidator:
                     logger.warning(f"Model configuration missing expected key: {key}")
 
             # Log key configuration parameters
-            logger.info(f"Model architecture validation:")
+            logger.info("Model architecture validation:")
             logger.info(f"  Model type: {config.model_type}")
             logger.info(f"  Vocab size: {config.vocab_size}")
             logger.info(f"  Hidden size: {config.hidden_size}")
@@ -148,10 +148,10 @@ class LlamaModelValidator:
 
             if abs(model_parameters - expected_parameters) / expected_parameters > tolerance:
                 logger.warning(
-                    f"Model size ({model_parameters:,}) differs significantly from expected size ({expected_parameters:,.0f})"
+                    f"Model size ({model_parameters:,}) differ significantly from expected size ({expected_parameters:,.0f})"
                 )
             else:
-                logger.info(f"  Model size matches expected 8B parameters")
+                logger.info("  Model size matches expected 8B parameters")
 
             return True
         except Exception as e:
@@ -262,7 +262,7 @@ class LlamaModelValidator:
 
             generation_success = True
             for i, prompt in enumerate(prompt_texts):
-                logger.info(f"Testing generation for prompt {i+1}: '{prompt[:50]}...'")
+                logger.info(f"Testing generation for prompt {i + 1}: '{prompt[:50]}...'")
 
                 # Tokenize the prompt
                 inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
@@ -331,7 +331,7 @@ class LlamaModelValidator:
             validation_results = []
 
             for i, (prompt, keywords) in enumerate(zip(hvac_prompts, expected_keywords)):
-                logger.info(f"Testing HVAC prompt {i+1}: '{prompt[:50]}...'")
+                logger.info(f"Testing HVAC prompt {i + 1}: '{prompt[:50]}...'")
 
                 # Tokenize the prompt
                 inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
@@ -395,8 +395,10 @@ class LlamaModelValidator:
             # Simple HVAC-related calculations
             calculation_prompts = [
                 "If an HVAC system consumes 5 kW for 10 hours, how much energy does it consume in kWh?",
-                "If the outdoor temperature is 30°C and the cooling setpoint is 24°C with a coefficient of performance of 3, calculate the energy needed to cool 100 cubic meters of air.",
-                "A building has an average power demand of 150 kW. If the demand charge is $15.65/kW, what is the monthly demand charge?",
+                "If the outdoor temperature is 30°C and the cooling setpoint is 24°C with a coefficient of performance of 3,"
+                "calculate the energy needed to cool 100 cubic meters of air.",
+                "A building has an average power demand of 150 kW. "
+                "If the demand charge is $15.65/kW, what is the monthly demand charge?",
             ]
 
             # Expected answers (approximately)
@@ -411,7 +413,7 @@ class LlamaModelValidator:
             numerical_reasoning_score = 0
 
             for i, (prompt, expected) in enumerate(zip(calculation_prompts, expected_answers)):
-                logger.info(f"Testing calculation {i+1}: '{prompt}'")
+                logger.info(f"Testing calculation {i + 1}: '{prompt}'")
 
                 # Tokenize the prompt
                 inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)

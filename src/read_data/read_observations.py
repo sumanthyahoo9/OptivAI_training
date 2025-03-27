@@ -148,7 +148,8 @@ def validate_observations(file_path):
                 f"Warning: Extremely high electricity demand detected: max={df['HVAC_electricity_demand_rate'].max()}"
             )
         print(
-            f"HVAC electricity demand range: min={df['HVAC_electricity_demand_rate'].min()}, max={df['HVAC_electricity_demand_rate'].max()}"
+            f"Electricity range: min={df['HVAC_electricity_demand_rate'].min()},"
+            f"max={df['HVAC_electricity_demand_rate'].max()}"
         )
 
     # Create visualizations to help identify patterns and issues

@@ -55,7 +55,7 @@ def validate_agent_actions(file_path):
     ]
     if not heating_outliers.empty:
         print(f"\nFound {len(heating_outliers)} potential heating setpoint outliers")
-        print(f"Sample outliers (first 5):")
+        print("Sample outliers (first 5):")
         print(heating_outliers.head())
     else:
         print(
@@ -68,7 +68,7 @@ def validate_agent_actions(file_path):
     ]
     if not cooling_outliers.empty:
         print(f"\nFound {len(cooling_outliers)} potential cooling setpoint outliers")
-        print(f"Sample outliers (first 5):")
+        print("Sample outliers (first 5):")
         print(cooling_outliers.head())
     else:
         print(
@@ -79,7 +79,7 @@ def validate_agent_actions(file_path):
     invalid_setpoints = df[df["Heating_Setpoint_RL"] >= df["Cooling_Setpoint_RL"]]
     if not invalid_setpoints.empty:
         print(f"\nFound {len(invalid_setpoints)} rows where heating setpoint >= cooling setpoint")
-        print(f"Sample invalid setpoints (first 5):")
+        print("Sample invalid setpoints (first 5):")
         print(invalid_setpoints.head())
     else:
         print("\nAll setpoints satisfy the constraint: heating < cooling")

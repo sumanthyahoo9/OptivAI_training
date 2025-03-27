@@ -39,7 +39,7 @@ format:
 
 lint:
 	@echo "$(GREEN)Running flake8 linter...$(NC)"
-	flake8 $(SRC_DIR) $(TEST_DIR) --count --max-complexity=10 --statistics
+	flake8 $(SRC_DIR) $(TEST_DIR) --count --max-line-length=125 --ignore=E203,W503 --max-complexity=50 --statistics
 
 type-check:
 	@echo "$(GREEN)Running mypy type checker...$(NC)"

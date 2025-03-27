@@ -152,15 +152,15 @@ def validate_epw_file(file_path):
             hour = df.loc[i, "Hour"]
 
             if not (1 <= month <= 12):
-                print(f"Invalid month at row {i+1}: {month}")
+                print(f"Invalid month at row {i + 1}: {month}")
                 time_issues += 1
 
             if not (1 <= day <= 31):
-                print(f"Invalid day at row {i+1}: {day}")
+                print(f"Invalid day at row {i + 1}: {day}")
                 time_issues += 1
 
             if not (1 <= hour <= 24):
-                print(f"Invalid hour at row {i+1}: {hour}")
+                print(f"Invalid hour at row {i + 1}: {hour}")
                 time_issues += 1
 
         if time_issues == 0:

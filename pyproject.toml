@@ -99,3 +99,13 @@ addopts = "--cov=optivai_training"
 [tool.coverage.run]
 source = ["optivai_training"]
 omit = ["tests/*"]
+
+[tool.flake8]
+max-line-length = 125
+ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+]

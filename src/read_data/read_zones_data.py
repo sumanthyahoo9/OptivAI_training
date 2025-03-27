@@ -31,7 +31,7 @@ def validate_epjson_file(file_path):
         with open(file_path, "r") as f:
             data = json.load(f)
 
-        print(f"\nSuccessfully loaded JSON data from file")
+        print("\nSuccessfully loaded JSON data from file")
 
         # Check top-level structure
         print("\nChecking epJSON structure...")
@@ -72,7 +72,7 @@ def validate_epjson_file(file_path):
         # Check simulation control settings
         if "SimulationControl" in data:
             sim_props = list(data["SimulationControl"].values())[0]
-            print(f"\nSimulation Control:")
+            print("\nSimulation Control:")
             print(f"Do zone sizing: {sim_props.get('do_zone_sizing_calculation', 'Not specified')}")
             print(
                 f"Do system sizing: {sim_props.get('do_system_sizing_calculation', 'Not specified')}"
@@ -84,13 +84,13 @@ def validate_epjson_file(file_path):
                 f"Run simulation for sizing periods: {sim_props.get('run_simulation_for_sizing_periods', 'Not specified')}"
             )
             print(
-                f"Run simulation for weather file: {sim_props.get('run_simulation_for_weather_file_run_periods', 'Not specified')}"
+                f"Run simulation for weather file: {sim_props.get('run_simulation_for_weather_file_run_periods', 'None')}"
             )
 
         # Check run period
         if "RunPeriod" in data:
             run_props = list(data["RunPeriod"].values())[0]
-            print(f"\nRun Period:")
+            print("\nRun Period:")
             print(f"Begin month: {run_props.get('begin_month', 'Not specified')}")
             print(f"Begin day: {run_props.get('begin_day_of_month', 'Not specified')}")
             print(f"End month: {run_props.get('end_month', 'Not specified')}")

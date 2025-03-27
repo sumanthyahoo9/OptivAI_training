@@ -322,12 +322,13 @@ class VisionModelValidator:
                 # Try to use a default font
                 try:
                     font = ImageFont.truetype("arial.ttf", 24)
-                except Exception as _:
+                except Exception:
                     # Fall back to default font if arial not available
                     font = ImageFont.load_default()
 
                 # Draw some HVAC-related text
-                blueprint_text = "HVAC System Design\nSupply Temperature: 55°F\nReturn Temperature: 75°F\nAir Flow: 2000 CFM\nEquipment: VAV with reheat"
+                blueprint_text = "HVAC System Design\nSupply Temperature: 55°F" \
+                    "\nReturn Temperature: 75°F\nAir Flow: 2000 CFM\nEquipment: VAV with reheat"
                 d.text((50, 50), blueprint_text, fill="black", font=font)
 
                 # Save temporary image
