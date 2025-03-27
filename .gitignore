@@ -87,6 +87,8 @@ wandb/
 *.npy
 *.npz
 *.pkl
+*.png
+*.epw
 data/raw/
 data/processed/
 
@@ -107,6 +109,7 @@ output/
 *.html
 *.idf
 *.epw
+*.epJSON
 !data/weather/*.epw
 !data/buildings/*.idf
 
