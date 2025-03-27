@@ -7,7 +7,7 @@ name = "optivai_training"
 version = "0.1.0"
 description = "HVAC optimization using reinforcement learning"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
     {name = "OptivAI Team"}
