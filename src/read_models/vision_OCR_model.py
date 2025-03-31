@@ -130,12 +130,8 @@ class VisionModelValidator:
             if self.model_type == "trocr":
                 # Check encoder (Vision) configuration
                 if hasattr(config, "encoder") and config.encoder:
-                    logger.info(
-                        "  Vision Encoder type: %s", config.encoder.get("model_type", "unknown")
-                    )
-                    logger.info(
-                        "  Vision Hidden size: %s", config.encoder.get("hidden_size", "unknown")
-                    )
+                    logger.info("  Vision Encoder type: %s", config.encoder.get("model_type", "unknown"))
+                    logger.info("  Vision Hidden size: %s", config.encoder.get("hidden_size", "unknown"))
                     logger.info(
                         "  Vision Number of layers: %s",
                         config.encoder.get("num_hidden_layers", "unknown"),
@@ -144,15 +140,11 @@ class VisionModelValidator:
                         "  Vision Number of attention heads: %s",
                         config.encoder.get("num_attention_heads", "unknown"),
                     )
-                    logger.info(
-                        "  Vision Image size: %s", config.encoder.get("image_size", "unknown")
-                    )
+                    logger.info("  Vision Image size: %s", config.encoder.get("image_size", "unknown"))
 
                 # Check decoder (Text) configuration
                 if hasattr(config, "decoder") and config.decoder:
-                    logger.info(
-                        "  Text Decoder type: %s", config.decoder.get("model_type", "unknown")
-                    )
+                    logger.info("  Text Decoder type: %s", config.decoder.get("model_type", "unknown"))
                     logger.info("  Text Hidden size: %s", config.decoder.get("d_model", "unknown"))
                     logger.info(
                         "  Text Number of layers: %s",
@@ -162,42 +154,28 @@ class VisionModelValidator:
                         "  Text Number of attention heads: %s",
                         config.decoder.get("decoder_attention_heads", "unknown"),
                     )
-                    logger.info(
-                        "  Text Vocab size: %s", config.decoder.get("vocab_size", "unknown")
-                    )
+                    logger.info("  Text Vocab size: %s", config.decoder.get("vocab_size", "unknown"))
 
             elif self.model_type == "mllama":
                 # Check vision configuration
                 if hasattr(config, "vision_config") and config.vision_config:
                     vision_config = config.vision_config
-                    logger.info(
-                        "  Vision model type: %s", vision_config.get("model_type", "unknown")
-                    )
-                    logger.info(
-                        "  Vision hidden size: %s", vision_config.get("hidden_size", "unknown")
-                    )
-                    logger.info(
-                        "  Vision layers: %s", vision_config.get("num_hidden_layers", "unknown")
-                    )
+                    logger.info("  Vision model type: %s", vision_config.get("model_type", "unknown"))
+                    logger.info("  Vision hidden size: %s", vision_config.get("hidden_size", "unknown"))
+                    logger.info("  Vision layers: %s", vision_config.get("num_hidden_layers", "unknown"))
                     logger.info(
                         "  Vision attention heads: %s",
                         vision_config.get("attention_heads", "unknown"),
                     )
-                    logger.info(
-                        "  Vision image size: %s", vision_config.get("image_size", "unknown")
-                    )
-                    logger.info(
-                        "  Vision patch size: %s", vision_config.get("patch_size", "unknown")
-                    )
+                    logger.info("  Vision image size: %s", vision_config.get("image_size", "unknown"))
+                    logger.info("  Vision patch size: %s", vision_config.get("patch_size", "unknown"))
 
                 # Check text configuration
                 if hasattr(config, "text_config") and config.text_config:
                     text_config = config.text_config
                     logger.info("  Text model type: %s", text_config.get("model_type", "unknown"))
                     logger.info("  Text hidden size: %s", text_config.get("hidden_size", "unknown"))
-                    logger.info(
-                        "  Text layers: %s", text_config.get("num_hidden_layers", "unknown")
-                    )
+                    logger.info("  Text layers: %s", text_config.get("num_hidden_layers", "unknown"))
                     logger.info(
                         "  Text attention heads: %s",
                         text_config.get("num_attention_heads", "unknown"),
@@ -210,9 +188,7 @@ class VisionModelValidator:
 
             # Roughly check if parameter count makes sense
             if self.model_type == "trocr" and model_parameters < 1e8:
-                logger.warning(
-                    "TrOCR model has fewer parameters than expected (%s)", f"{model_parameters:,}"
-                )
+                logger.warning("TrOCR model has fewer parameters than expected (%s)", f"{model_parameters:,}")
             elif self.model_type == "mllama" and model_parameters < 1e9:
                 logger.warning(
                     "Llama Vision model has fewer parameters than expected (%s)",
@@ -243,9 +219,7 @@ class VisionModelValidator:
             # Examine a subset of model parameters for efficiency
             subset_size = 20  # Examine only a subset of layers for efficiency
             layer_names = [name for name, _ in self.model.named_parameters()]
-            sample_layers = (
-                layer_names[:subset_size] if len(layer_names) > subset_size else layer_names
-            )
+            sample_layers = layer_names[:subset_size] if len(layer_names) > subset_size else layer_names
 
             for name, param in tqdm(
                 [(n, p) for n, p in self.model.named_parameters() if n in sample_layers],
@@ -327,8 +301,10 @@ class VisionModelValidator:
                     font = ImageFont.load_default()
 
                 # Draw some HVAC-related text
-                blueprint_text = "HVAC System Design\nSupply Temperature: 55°F" \
+                blueprint_text = (
+                    "HVAC System Design\nSupply Temperature: 55°F"
                     "\nReturn Temperature: 75°F\nAir Flow: 2000 CFM\nEquipment: VAV with reheat"
+                )
                 d.text((50, 50), blueprint_text, fill="black", font=font)
 
                 # Save temporary image
@@ -344,27 +320,21 @@ class VisionModelValidator:
             # Process image according to model type
             if self.model_type == "trocr":
                 # Process for TrOCR
-                pixel_values = self.processor(image, return_tensors="pt").pixel_values.to(
-                    self.device
-                )
+                pixel_values = self.processor(image, return_tensors="pt").pixel_values.to(self.device)
 
                 # Generate text
                 with torch.no_grad():
                     generated_ids = self.model.generate(pixel_values, max_length=50)
 
                 # Decode the generated ids
-                generated_text = self.processor.batch_decode(
-                    generated_ids, skip_special_tokens=True
-                )[0]
+                generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
                 logger.info("TrOCR recognized text: %s", generated_text)
 
             elif self.model_type == "mllama":
                 # Process for Llama Vision
                 prompt = "What text do you see in this image?"
-                inputs = self.processor(text=prompt, images=image, return_tensors="pt").to(
-                    self.device
-                )
+                inputs = self.processor(text=prompt, images=image, return_tensors="pt").to(self.device)
 
                 # Generate text
                 with torch.no_grad():
@@ -482,31 +452,24 @@ class VisionModelValidator:
 
                 if self.model_type == "trocr":
                     # TrOCR doesn't support prompting, so we just extract text
-                    pixel_values = self.processor(blueprint, return_tensors="pt").pixel_values.to(
-                        self.device
-                    )
+                    pixel_values = self.processor(blueprint, return_tensors="pt").pixel_values.to(self.device)
 
                     with torch.no_grad():
                         generated_ids = self.model.generate(pixel_values, max_length=200)
 
-                    extracted_text = self.processor.batch_decode(
-                        generated_ids, skip_special_tokens=True
-                    )[0]
+                    extracted_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
                     results.append(
                         {
                             "prompt": prompt,
                             "response": "TrOCR extracted text: " + extracted_text,
-                            "success": len(extracted_text)
-                            > 20,  # Basic check if output is meaningful
+                            "success": len(extracted_text) > 20,  # Basic check if output is meaningful
                         }
                     )
 
                 elif self.model_type == "mllama":
                     # Process for Llama Vision
-                    inputs = self.processor(text=prompt, images=blueprint, return_tensors="pt").to(
-                        self.device
-                    )
+                    inputs = self.processor(text=prompt, images=blueprint, return_tensors="pt").to(self.device)
 
                     with torch.no_grad():
                         output = self.model.generate(
@@ -520,16 +483,13 @@ class VisionModelValidator:
 
                     # Check if response contains HVAC-specific terms
                     hvac_terms = ["room", "vav", "cfm", "temperature", "supply", "return", "ahu"]
-                    hvac_term_matches = sum(
-                        1 for term in hvac_terms if term.lower() in response.lower()
-                    )
+                    hvac_term_matches = sum(1 for term in hvac_terms if term.lower() in response.lower())
 
                     results.append(
                         {
                             "prompt": prompt,
                             "response": response,
-                            "success": hvac_term_matches
-                            >= 2,  # At least 2 HVAC terms should be in the response
+                            "success": hvac_term_matches >= 2,  # At least 2 HVAC terms should be in the response
                         }
                     )
 
@@ -580,9 +540,7 @@ class VisionModelValidator:
             validation_results["sample_image_test"] = self.validate_sample_image()
 
             # Step 5: Test blueprint-specific capabilities
-            validation_results["blueprint_capabilities"] = (
-                self.validate_blueprint_specific_capabilities(blueprint_path)
-            )
+            validation_results["blueprint_capabilities"] = self.validate_blueprint_specific_capabilities(blueprint_path)
 
             # Generate summary report
             logger.info("\n" + "=" * 50)
@@ -618,12 +576,8 @@ if __name__ == "__main__":
     # Accept model_id from command line arguments
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Validate Vision/OCR models for processing blueprints"
-    )
-    parser.add_argument(
-        "--model_id", type=str, required=True, help="HuggingFace model ID to validate"
-    )
+    parser = argparse.ArgumentParser(description="Validate Vision/OCR models for processing blueprints")
+    parser.add_argument("--model_id", type=str, required=True, help="HuggingFace model ID to validate")
     parser.add_argument(
         "--model_type",
         type=str,

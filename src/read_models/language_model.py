@@ -177,9 +177,7 @@ class LlamaModelValidator:
             # Examine a subset of model parameters for efficiency
             subset_size = 20  # Examine only a subset of layers for efficiency
             layer_names = [name for name, _ in self.model.named_parameters()]
-            sample_layers = (
-                layer_names[:subset_size] if len(layer_names) > subset_size else layer_names
-            )
+            sample_layers = layer_names[:subset_size] if len(layer_names) > subset_size else layer_names
 
             for name, param in tqdm(
                 [(n, p) for n, p in self.model.named_parameters() if n in sample_layers],
@@ -206,9 +204,7 @@ class LlamaModelValidator:
 
             # Check for consistent dtype usage
             logger.info(f"Data type distribution: {tensor_stats['dtypes']}")
-            if (
-                len(tensor_stats["dtypes"]) > 2
-            ):  # Allowing for mixed precision (e.g., bf16 and float32)
+            if len(tensor_stats["dtypes"]) > 2:  # Allowing for mixed precision (e.g., bf16 and float32)
                 logger.warning(f"Model uses multiple data types: {tensor_stats['dtypes']}")
 
             # Report NaN and Inf findings
@@ -353,9 +349,7 @@ class LlamaModelValidator:
                 keyword_matches = sum(1 for kw in keywords if kw.lower() in generated_text.lower())
                 keyword_coverage = keyword_matches / len(keywords)
 
-                logger.info(
-                    f"Keyword coverage: {keyword_coverage:.2f} ({keyword_matches}/{len(keywords)})"
-                )
+                logger.info(f"Keyword coverage: {keyword_coverage:.2f} ({keyword_matches}/{len(keywords)})")
 
                 validation_results.append(
                     {
@@ -370,12 +364,8 @@ class LlamaModelValidator:
                 torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
             # Compute overall validation score
-            avg_keyword_coverage = sum(r["keyword_coverage"] for r in validation_results) / len(
-                validation_results
-            )
-            avg_response_length = sum(r["response_length"] for r in validation_results) / len(
-                validation_results
-            )
+            avg_keyword_coverage = sum(r["keyword_coverage"] for r in validation_results) / len(validation_results)
+            avg_response_length = sum(r["response_length"] for r in validation_results) / len(validation_results)
 
             logger.info(f"Average keyword coverage: {avg_keyword_coverage:.2f}")
             logger.info(f"Average response length: {avg_response_length:.0f} characters")
@@ -436,9 +426,7 @@ class LlamaModelValidator:
                     numerical_reasoning_score += 1
                     logger.info(f"Calculation correct: Expected '{expected}' found in response")
                 else:
-                    logger.warning(
-                        f"Calculation potentially incorrect: Expected '{expected}' not found"
-                    )
+                    logger.warning(f"Calculation potentially incorrect: Expected '{expected}' not found")
                     logger.info(f"Response (truncated): '{generated_text[len(prompt):100]}...'")
 
                 # Avoid GPU memory buildup

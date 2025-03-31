@@ -74,18 +74,12 @@ def validate_epjson_file(file_path):
             sim_props = list(data["SimulationControl"].values())[0]
             print("\nSimulation Control:")
             print(f"Do zone sizing: {sim_props.get('do_zone_sizing_calculation', 'Not specified')}")
-            print(
-                f"Do system sizing: {sim_props.get('do_system_sizing_calculation', 'Not specified')}"
-            )
-            print(
-                f"Do plant sizing: {sim_props.get('do_plant_sizing_calculation', 'Not specified')}"
-            )
+            print(f"Do system sizing: {sim_props.get('do_system_sizing_calculation', 'Not specified')}")
+            print(f"Do plant sizing: {sim_props.get('do_plant_sizing_calculation', 'Not specified')}")
             print(
                 f"Run simulation for sizing periods: {sim_props.get('run_simulation_for_sizing_periods', 'Not specified')}"
             )
-            print(
-                f"Run simulation for weather file: {sim_props.get('run_simulation_for_weather_file_run_periods', 'None')}"
-            )
+            print(f"Run simulation for weather file: {sim_props.get('run_simulation_for_weather_file_run_periods', 'None')}")
 
         # Check run period
         if "RunPeriod" in data:
@@ -130,9 +124,7 @@ def validate_epjson_file(file_path):
         schedule_types = [key for key in data.keys() if key.startswith("Schedule")]
         schedule_count = sum(len(data.get(schedule, {})) for schedule in schedule_types)
         if schedule_count > 0:
-            print(
-                f"\nFound {schedule_count} schedule objects across {len(schedule_types)} schedule types"
-            )
+            print(f"\nFound {schedule_count} schedule objects across {len(schedule_types)} schedule types")
         else:
             print("\nWarning: No schedules defined")
 
@@ -148,13 +140,9 @@ def validate_epjson_file(file_path):
         construction_count = len(data.get("Construction", {}))
 
         if material_count > 0 and construction_count > 0:
-            print(
-                f"\nFound {material_count} material objects and {construction_count} constructions"
-            )
+            print(f"\nFound {material_count} material objects and {construction_count} constructions")
         else:
-            print(
-                f"\nWarning: Missing materials ({material_count}) or constructions ({construction_count})"
-            )
+            print(f"\nWarning: Missing materials ({material_count}) or constructions ({construction_count})")
 
         # Check for internal loads
         load_objects = [
@@ -219,10 +207,7 @@ def validate_epjson_file(file_path):
             for zone_id, connected_zones in zone_connections.items():
                 zone_name = zones[zone_id].get("name", zone_id)
                 if connected_zones:
-                    connected_names = [
-                        zones[z_id].get("name", z_id) if z_id in zones else z_id
-                        for z_id in connected_zones
-                    ]
+                    connected_names = [zones[z_id].get("name", z_id) if z_id in zones else z_id for z_id in connected_zones]
                     print(f"{zone_name} is connected to: {', '.join(connected_names)}")
                 else:
                     print(f"{zone_name} has no connections to other zones")
