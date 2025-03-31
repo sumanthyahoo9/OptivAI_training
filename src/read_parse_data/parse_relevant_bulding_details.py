@@ -5,31 +5,26 @@ Because we don't want to overwhelm the system with too many irrelevant details
 """
 import pprint
 import argparse
-
 import json
-import pandas as pd
-import numpy as np
+
 
 def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
     """
     Extract key features from an epJSON file for a specific zone.
-    
     Parameters:
     -----------
     epjson_file : str
         Path to the epJSON file
     zone_name : str
         Name of the zone to extract information for
-    
     Returns:
     --------
     dict
         Dictionary containing key features of the specified zone
     """
     # Load the epJSON file
-    with open(epjson_file, 'r') as f:
+    with open(epjson_file, 'r', encoding="utf-8") as f:
         data = json.load(f)
-    
     # Initialize the results dictionary
     results = {
         "zone_properties": {},
@@ -38,7 +33,6 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
         "control_parameters": {},
         "occupancy_loads": {}
     }
-    
     # Extract Zone-Specific Properties
     if zone_name in data.get("Zone", {}):
         zone_info = data["Zone"][zone_name]
@@ -49,23 +43,19 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
             "multiplier": zone_info.get("multiplier", "N/A"),
             "type": zone_info.get("type", "N/A")
         }
-    
     # Find surfaces associated with this zone
     surfaces = []
     adjacencies = []
     exterior_surfaces = []
-    
     for surf_name, surf_data in data.get("BuildingSurface:Detailed", {}).items():
         if surf_data.get("zone_name") == zone_name:
             surface_type = surf_data.get("surface_type", "Unknown")
             outside_boundary = surf_data.get("outside_boundary_condition", "Unknown")
-            
             surfaces.append({
                 "name": surf_name,
                 "type": surface_type,
                 "boundary": outside_boundary
             })
-            
             # Check if it's an exterior surface
             if outside_boundary == "Outdoors":
                 exterior_surfaces.append({
@@ -74,7 +64,6 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                     "sun_exposure": surf_data.get("sun_exposure", "Unknown"),
                     "wind_exposure": surf_data.get("wind_exposure", "Unknown")
                 })
-            
             # Check for adjacencies
             if outside_boundary == "Surface":
                 adjacent_surface = surf_data.get("outside_boundary_condition_object", "Unknown")
@@ -83,18 +72,15 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                 for other_surf, other_data in data.get("BuildingSurface:Detailed", {}).items():
                     if other_surf == adjacent_surface:
                         adjacent_zone = other_data.get("zone_name", "Unknown")
-                
                 if adjacent_zone and adjacent_zone != zone_name:
                     adjacencies.append({
                         "adjacent_zone": adjacent_zone,
                         "surface_name": surf_name,
                         "adjacent_surface": adjacent_surface
                     })
-    
     results["zone_properties"]["surfaces"] = surfaces
     results["zone_properties"]["adjacencies"] = adjacencies
     results["zone_properties"]["exterior_surfaces"] = exterior_surfaces
-    
     # Extract windows/glazing for this zone
     windows = []
     for window_name, window_data in data.get("FenestrationSurface:Detailed", {}).items():
@@ -109,9 +95,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                     "construction": construction_name,
                     "vf_to_ground": window_data.get("view_factor_to_ground", "N/A")
                 })
-    
     results["construction"]["windows"] = windows
-    
     # Extract construction materials
     constructions = {}
     # Find all construction names used in the zone's surfaces
@@ -120,18 +104,16 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
         for surf_name, surf_data in data.get("BuildingSurface:Detailed", {}).items():
             if surf_name == surf["name"]:
                 used_constructions.add(surf_data.get("construction_name", ""))
-    
     for window in windows:
         used_constructions.add(window.get("construction", ""))
-    
     # Get details of these constructions
     for const_name in used_constructions:
         if const_name and const_name in data.get("Construction", {}):
             const_data = data["Construction"][const_name]
             constructions[const_name] = const_data
-    
+
     results["construction"]["materials"] = constructions
-    
+
     # Extract infiltration data
     infiltration = {}
     for infil_name, infil_data in data.get("ZoneInfiltration:DesignFlowRate", {}).items():
@@ -142,9 +124,9 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                 "schedule": infil_data.get("schedule_name", "N/A"),
                 "velocity_coefficient": infil_data.get("velocity_term_coefficient", "N/A")
             }
-    
+
     results["construction"]["infiltration"] = infiltration
-    
+
     # Extract HVAC System information
     hvac_equipment = {}
     # Find zone equipment connections
@@ -156,13 +138,14 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                 for equip in equipments:
                     equip_type = equip.get("zone_equipment_object_type", "")
                     equip_name = equip.get("zone_equipment_name", "")
-                    
+
                     # Terminal unit details
-                    if equip_type == "ZoneHVAC:AirDistributionUnit" and equip_name in data.get("ZoneHVAC:AirDistributionUnit", {}):
+                    if equip_type == "ZoneHVAC:AirDistributionUnit" and equip_name in data.get(
+                            "ZoneHVAC:AirDistributionUnit", {}):
                         adu_data = data["ZoneHVAC:AirDistributionUnit"][equip_name]
                         terminal_type = adu_data.get("air_terminal_object_type", "")
                         terminal_name = adu_data.get("air_terminal_name", "")
-                        
+
                         if terminal_type and terminal_name in data.get(terminal_type, {}):
                             terminal_data = data[terminal_type][terminal_name]
                             hvac_equipment["terminal_unit"] = {
@@ -171,11 +154,11 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                                 "max_flow_rate": terminal_data.get("maximum_air_flow_rate", "N/A"),
                                 "min_flow_fraction": terminal_data.get("constant_minimum_air_flow_fraction", "N/A")
                             }
-                            
+
                             # Reheat coil info if available
                             reheat_coil_type = terminal_data.get("reheat_coil_object_type", "")
                             reheat_coil_name = terminal_data.get("reheat_coil_name", "")
-                            
+
                             if reheat_coil_type and reheat_coil_name in data.get(reheat_coil_type, {}):
                                 coil_data = data[reheat_coil_type][reheat_coil_name]
                                 hvac_equipment["reheat_coil"] = {
@@ -184,7 +167,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                                     "efficiency": coil_data.get("efficiency", "N/A"),
                                     "capacity": coil_data.get("nominal_capacity", "N/A")
                                 }
-    
+
     # Get air loop info
     air_loop_name = None
     for splitter_name, splitter_data in data.get("AirLoopHVAC:ZoneSplitter", {}).items():
@@ -193,16 +176,16 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
             node_name = node.get("outlet_node_name", "")
             if node_name.startswith(f"{zone_name} ATU"):
                 air_loop_name = "VAV Sys 1"  # This is known from examining the file structure
-    
+
     if air_loop_name and air_loop_name in data.get("AirLoopHVAC", {}):
         air_loop_data = data["AirLoopHVAC"][air_loop_name]
         hvac_equipment["air_loop"] = {
             "name": air_loop_name,
             "design_flow_rate": air_loop_data.get("design_supply_air_flow_rate", "N/A")
         }
-        
+
     results["hvac_system"] = hvac_equipment
-    
+
     # Extract Control Parameters
     # Thermostat control
     thermostat_info = {}
@@ -210,26 +193,30 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
         if ctrl_data.get("zone_or_zonelist_name") == zone_name:
             thermostat_info["control_name"] = ctrl_name
             thermostat_info["control_type_schedule"] = ctrl_data.get("control_type_schedule_name", "N/A")
-            
+
             # Get setpoint objects
             control_objects = []
             for i in range(1, 4):  # Check for up to 3 control objects
                 obj_type = ctrl_data.get(f"control_{i}_object_type", None)
                 obj_name = ctrl_data.get(f"control_{i}_name", None)
-                
+
                 if obj_type and obj_name:
                     if obj_name in data.get(obj_type, {}):
                         setpoint_data = data[obj_type][obj_name]
-                        control_objects.append({
-                            "type": obj_type,
-                            "name": obj_name,
-                            "schedule": setpoint_data.get("setpoint_temperature_schedule_name", 
-                                        setpoint_data.get("cooling_setpoint_temperature_schedule_name", 
-                                        setpoint_data.get("heating_setpoint_temperature_schedule_name", "N/A")))
-                        })
-            
+                        control_objects.append(
+                            {
+                                "type": obj_type,
+                                "name": obj_name,
+                                "schedule": setpoint_data.get(
+                                    "setpoint_temperature_schedule_name",
+                                    setpoint_data.get(
+                                        "cooling_setpoint_temperature_schedule_name",
+                                        setpoint_data.get(
+                                            "heating_setpoint_temperature_schedule_name",
+                                            "N/A")))})
+
             thermostat_info["control_objects"] = control_objects
-    
+
     # Extract schedule details for setpoints
     setpoint_schedules = {}
     for control_obj in thermostat_info.get("control_objects", []):
@@ -239,10 +226,10 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
             # Extract the key setpoint values (simplified)
             setpoint_values = []
             for i in range(0, len(schedule_data.get("data", [])), 4):  # Approximate parsing of schedule data
-                if i+3 < len(schedule_data.get("data", [])):
-                    time_spec = schedule_data["data"][i+2].get("field", "")
-                    value = schedule_data["data"][i+3].get("field", "")
-                    
+                if i + 3 < len(schedule_data.get("data", [])):
+                    time_spec = schedule_data["data"][i + 2].get("field", "")
+                    value = schedule_data["data"][i + 3].get("field", "")
+
                     # Ensure time_spec is a string before calling startswith()
                     if isinstance(time_spec, str) and time_spec.startswith("Until:") and value:
                         try:
@@ -253,12 +240,12 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                             })
                         except (ValueError, TypeError):
                             pass
-        
+
         setpoint_schedules[schedule_name] = setpoint_values
-    
+
     results["control_parameters"]["thermostat"] = thermostat_info
     results["control_parameters"]["setpoint_schedules"] = setpoint_schedules
-    
+
     # Extract Occupancy and Internal Loads
     # People
     people_info = {}
@@ -271,7 +258,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                 "activity_level_schedule": people_data.get("activity_level_schedule_name", "N/A"),
                 "fraction_radiant": people_data.get("fraction_radiant", "N/A")
             }
-    
+
     # Lights
     lights_info = {}
     for light_name, light_data in data.get("Lights", {}).items():
@@ -283,7 +270,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                 "fraction_radiant": light_data.get("fraction_radiant", "N/A"),
                 "return_air_fraction": light_data.get("return_air_fraction", "N/A")
             }
-    
+
     # Equipment
     equipment_info = {}
     for eq_name, eq_data in data.get("ElectricEquipment", {}).items():
@@ -295,11 +282,11 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                 "fraction_radiant": eq_data.get("fraction_radiant", "N/A"),
                 "fraction_latent": eq_data.get("fraction_latent", "N/A")
             }
-    
+
     results["occupancy_loads"]["people"] = people_info
     results["occupancy_loads"]["lights"] = lights_info
     results["occupancy_loads"]["equipment"] = equipment_info
-    
+
     return results
 
 # Usage example:

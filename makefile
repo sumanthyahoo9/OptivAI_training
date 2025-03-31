@@ -41,6 +41,10 @@ lint:
 	@echo "$(GREEN)Running flake8 linter...$(NC)"
 	flake8 $(SRC_DIR) $(TEST_DIR) --count --max-line-length=125 --ignore=E203,W503 --max-complexity=50 --statistics
 
+format-fix:
+	@echo "$(GREEN)Fixing code formatting issues...$(NC)"
+	autopep8 --in-place --recursive --max-line-length=125 --aggressive --aggressive $(SRC_DIR) $(TEST_DIR)
+
 type-check:
 	@echo "$(GREEN)Running mypy type checker...$(NC)"
 	mypy $(SRC_DIR) $(TEST_DIR)
