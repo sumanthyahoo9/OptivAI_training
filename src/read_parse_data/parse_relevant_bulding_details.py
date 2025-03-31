@@ -136,12 +136,8 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
     for conn_name, conn_data in data.get("ZoneHVAC:EquipmentConnections", {}).items():
         if conn_data.get("zone_name") == zone_name:
             equipment_list_name = conn_data.get("zone_conditioning_equipment_list_name", "")
-            if equipment_list_name and equipment_list_name in data.get(
-                "ZoneHVAC:EquipmentList", {}
-            ):
-                equipments = data["ZoneHVAC:EquipmentList"][equipment_list_name].get(
-                    "equipment", []
-                )
+            if equipment_list_name and equipment_list_name in data.get("ZoneHVAC:EquipmentList", {}):
+                equipments = data["ZoneHVAC:EquipmentList"][equipment_list_name].get("equipment", [])
                 for equip in equipments:
                     equip_type = equip.get("zone_equipment_object_type", "")
                     equip_name = equip.get("zone_equipment_name", "")
@@ -160,18 +156,14 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                                 "type": terminal_type,
                                 "name": terminal_name,
                                 "max_flow_rate": terminal_data.get("maximum_air_flow_rate", "N/A"),
-                                "min_flow_fraction": terminal_data.get(
-                                    "constant_minimum_air_flow_fraction", "N/A"
-                                ),
+                                "min_flow_fraction": terminal_data.get("constant_minimum_air_flow_fraction", "N/A"),
                             }
 
                             # Reheat coil info if available
                             reheat_coil_type = terminal_data.get("reheat_coil_object_type", "")
                             reheat_coil_name = terminal_data.get("reheat_coil_name", "")
 
-                            if reheat_coil_type and reheat_coil_name in data.get(
-                                reheat_coil_type, {}
-                            ):
+                            if reheat_coil_type and reheat_coil_name in data.get(reheat_coil_type, {}):
                                 coil_data = data[reheat_coil_type][reheat_coil_name]
                                 hvac_equipment["reheat_coil"] = {
                                     "type": reheat_coil_type,
@@ -204,9 +196,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
     for ctrl_name, ctrl_data in data.get("ZoneControl:Thermostat", {}).items():
         if ctrl_data.get("zone_or_zonelist_name") == zone_name:
             thermostat_info["control_name"] = ctrl_name
-            thermostat_info["control_type_schedule"] = ctrl_data.get(
-                "control_type_schedule_name", "N/A"
-            )
+            thermostat_info["control_type_schedule"] = ctrl_data.get("control_type_schedule_name", "N/A")
 
             # Get setpoint objects
             control_objects = []
@@ -225,9 +215,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
                                     "setpoint_temperature_schedule_name",
                                     setpoint_data.get(
                                         "cooling_setpoint_temperature_schedule_name",
-                                        setpoint_data.get(
-                                            "heating_setpoint_temperature_schedule_name", "N/A"
-                                        ),
+                                        setpoint_data.get("heating_setpoint_temperature_schedule_name", "N/A"),
                                     ),
                                 ),
                             }
@@ -243,9 +231,7 @@ def extract_zone_features(epjson_file, zone_name="SPACE1-1"):
             schedule_data = data["Schedule:Compact"][schedule_name]
             # Extract the key setpoint values (simplified)
             setpoint_values = []
-            for i in range(
-                0, len(schedule_data.get("data", [])), 4
-            ):  # Approximate parsing of schedule data
+            for i in range(0, len(schedule_data.get("data", [])), 4):  # Approximate parsing of schedule data
                 if i + 3 < len(schedule_data.get("data", [])):
                     time_spec = schedule_data["data"][i + 2].get("field", "")
                     value = schedule_data["data"][i + 3].get("field", "")

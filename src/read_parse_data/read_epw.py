@@ -43,9 +43,7 @@ def validate_epw_file(file_path):
                 location_data = header_lines[0].strip().split(",")
                 if len(location_data) >= 4:
                     print(f"Location: {location_data[1]}, {location_data[3]}")
-                    print(
-                        f"WMO Station: {location_data[5] if len(location_data) > 5 else 'Not available'}"
-                    )
+                    print(f"WMO Station: {location_data[5] if len(location_data) > 5 else 'Not available'}")
 
             # Process data lines
             data_lines = lines[8:]
@@ -54,9 +52,7 @@ def validate_epw_file(file_path):
             # EPW files should typically have 8760 hours (or 8784 for leap years)
             expected_hours = 8760
             if len(data_lines) not in [8760, 8784]:
-                print(
-                    f"Warning: Unexpected number of data lines. Expected 8760 or 8784, found {len(data_lines)}"
-                )
+                print(f"Warning: Unexpected number of data lines. Expected 8760 or 8784, found {len(data_lines)}")
 
             # Parse data lines
             for line in data_lines:
@@ -253,9 +249,7 @@ def validate_epw_file(file_path):
         expected_hours = 24 * df.groupby(["Year", "Month", "Day"]).size().count()
         actual_hours = len(df)
         if expected_hours != actual_hours:
-            print(
-                f"Warning: Expected {expected_hours} hours based on date range, found {actual_hours}"
-            )
+            print(f"Warning: Expected {expected_hours} hours based on date range, found {actual_hours}")
         else:
             print(f"Data continuity check passed: {actual_hours} hours as expected")
 

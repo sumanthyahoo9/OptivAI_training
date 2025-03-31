@@ -71,23 +71,15 @@ def validate_observations(file_path):
 
     # Check month values
     if df["month"].min() < 1 or df["month"].max() > 12:
-        print(
-            f"Warning: Month values out of range: min={df['month'].min()}, max={df['month'].max()}"
-        )
+        print(f"Warning: Month values out of range: min={df['month'].min()}, max={df['month'].max()}")
     else:
-        print(
-            f"Month values are in correct range: min={df['month'].min()}, max={df['month'].max()}"
-        )
+        print(f"Month values are in correct range: min={df['month'].min()}, max={df['month'].max()}")
 
     # Check day values
     if df["day_of_month"].min() < 1 or df["day_of_month"].max() > 31:
-        print(
-            f"Warning: Day values out of range: min={df['day_of_month'].min()}, max={df['day_of_month'].max()}"
-        )
+        print(f"Warning: Day values out of range: min={df['day_of_month'].min()}, max={df['day_of_month'].max()}")
     else:
-        print(
-            f"Day values are in correct range: min={df['day_of_month'].min()}, max={df['day_of_month'].max()}"
-        )
+        print(f"Day values are in correct range: min={df['day_of_month'].min()}, max={df['day_of_month'].max()}")
 
     # Check hour values
     if df["hour"].min() < 0 or df["hour"].max() > 23:
@@ -103,9 +95,7 @@ def validate_observations(file_path):
     for col in temp_cols:
         if col in df.columns:
             if df[col].min() < -50 or df[col].max() > 50:
-                print(
-                    f"Warning: {col} has extreme values: min={df[col].min()}, max={df[col].max()}"
-                )
+                print(f"Warning: {col} has extreme values: min={df[col].min()}, max={df[col].max()}")
             else:
                 print(f"{col} is within reasonable range: min={df[col].min()}, max={df[col].max()}")
 
@@ -114,9 +104,7 @@ def validate_observations(file_path):
     for col in humidity_cols:
         if col in df.columns:
             if df[col].min() < 0 or df[col].max() > 100:
-                print(
-                    f"Warning: {col} has out-of-range values: min={df[col].min()}, max={df[col].max()}"
-                )
+                print(f"Warning: {col} has out-of-range values: min={df[col].min()}, max={df[col].max()}")
             else:
                 print(f"{col} is within valid range: min={df[col].min()}, max={df[col].max()}")
 
@@ -131,22 +119,16 @@ def validate_observations(file_path):
     if "htg_setpoint" in df.columns and "clg_setpoint" in df.columns:
         invalid_setpoints = df[df["htg_setpoint"] >= df["clg_setpoint"]]
         if not invalid_setpoints.empty:
-            print(
-                f"Warning: Found {len(invalid_setpoints)} rows where heating setpoint >= cooling setpoint"
-            )
+            print(f"Warning: Found {len(invalid_setpoints)} rows where heating setpoint >= cooling setpoint")
         else:
             print("All setpoints satisfy the constraint: heating < cooling")
 
     # Check for unrealistic electricity demand
     if "HVAC_electricity_demand_rate" in df.columns:
         if df["HVAC_electricity_demand_rate"].min() < 0:
-            print(
-                f"Warning: Negative electricity demand detected: min={df['HVAC_electricity_demand_rate'].min()}"
-            )
+            print(f"Warning: Negative electricity demand detected: min={df['HVAC_electricity_demand_rate'].min()}")
         if df["HVAC_electricity_demand_rate"].max() > 1e6:  # Adjust threshold as needed
-            print(
-                f"Warning: Extremely high electricity demand detected: max={df['HVAC_electricity_demand_rate'].max()}"
-            )
+            print(f"Warning: Extremely high electricity demand detected: max={df['HVAC_electricity_demand_rate'].max()}")
         print(
             f"Electricity range: min={df['HVAC_electricity_demand_rate'].min()},"
             f"max={df['HVAC_electricity_demand_rate'].max()}"

@@ -51,30 +51,22 @@ def validate_simulated_actions(file_path):
     cooling_min, cooling_max = 20, 30
 
     # Check for heating setpoint outliers
-    heating_outliers = df[
-        (df["Heating_Setpoint_RL"] < heating_min) | (df["Heating_Setpoint_RL"] > heating_max)
-    ]
+    heating_outliers = df[(df["Heating_Setpoint_RL"] < heating_min) | (df["Heating_Setpoint_RL"] > heating_max)]
     if not heating_outliers.empty:
         print(f"\nFound {len(heating_outliers)} potential heating setpoint outliers")
         print("Sample outliers (first 5):")
         print(heating_outliers.head())
     else:
-        print(
-            f"\nNo heating setpoint outliers detected outside range [{heating_min}, {heating_max}]"
-        )
+        print(f"\nNo heating setpoint outliers detected outside range [{heating_min}, {heating_max}]")
 
     # Check for cooling setpoint outliers
-    cooling_outliers = df[
-        (df["Cooling_Setpoint_RL"] < cooling_min) | (df["Cooling_Setpoint_RL"] > cooling_max)
-    ]
+    cooling_outliers = df[(df["Cooling_Setpoint_RL"] < cooling_min) | (df["Cooling_Setpoint_RL"] > cooling_max)]
     if not cooling_outliers.empty:
         print(f"\nFound {len(cooling_outliers)} potential cooling setpoint outliers")
         print("Sample outliers (first 5):")
         print(cooling_outliers.head())
     else:
-        print(
-            f"\nNo cooling setpoint outliers detected outside range [{cooling_min}, {cooling_max}]"
-        )
+        print(f"\nNo cooling setpoint outliers detected outside range [{cooling_min}, {cooling_max}]")
 
     # Validate constraint: Heating setpoint should be less than cooling setpoint
     invalid_setpoints = df[df["Heating_Setpoint_RL"] >= df["Cooling_Setpoint_RL"]]
