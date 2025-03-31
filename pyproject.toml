@@ -7,8 +7,9 @@ name = "optivai_training"
 version = "0.1.0"
 description = "HVAC optimization using reinforcement learning"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<4.0"  # Changed from >=3.9 to >=3.10,<4.0
 license = "MIT"
+# ...rest of the file
 authors = [
     {name = "OptivAI Team"}
 ]
