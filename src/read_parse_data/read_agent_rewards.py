@@ -135,6 +135,9 @@ def validate_rewards(file_path):
     else:
         print("\nNo suspiciously long sequences of identical rewards detected")
 
+    # Return the validated data
+    return df
+
 
 # Run the validation
 if __name__ == "__main__":

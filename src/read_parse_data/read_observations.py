@@ -183,6 +183,9 @@ def validate_observations(file_path):
             print("Correlation heatmap saved to 'observations_correlation.png'")
     print("\nValidation complete.")
 
+    # Return the validated observations
+    return df
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate observations CSV file")
