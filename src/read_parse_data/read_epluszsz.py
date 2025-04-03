@@ -19,23 +19,20 @@ def parse_epluszsz_data(file_path):
         epluszsz_data = pd.read_csv(file_path)
         print(f"Successfully loaded the Energy Plus ZSZ csv with the shape: {epluszsz_data.shape}")
         # Filter column names for SPACE5-1
-        space5_cols = [col for col in epluszsz_data.columns if "SPACE5-5" in col]
+        space5_cols = [col for col in epluszsz_data.columns if "SPACE5-1" in col]
         if space5_cols:
-            print(f"Found {len(space5_cols)} columns for SPACE5-5 in epluszsz.csv")
-            # Get the last row of the data (typically contains the final sizing values)
-            last_row = epluszsz_data.iloc[-1]
-            # Extract key sizing parameters
-            for col in space5_cols:
-                # Create a simplified key name
-                key = col.split(":")[-1].strip() if ":" in col else col
-                key = key.replace("[", "_").replace("]", "").replace(" ", "_").lower()
-                space5_sizing_data[key] = last_row[col]
-            print(f"Extracted sizing data for SPACE5-5: {len(space5_sizing_data)} parameters")
+            print(f"Found {len(space5_cols)} columns for SPACE5-1 in epluszsz.csv")
+            # Get the Time columns
+            time_cols = [col for col in epluszsz_data.columns if col == "Time"]
+            selected_cols = time_cols + space5_cols
+            print(f"Extracted sizing data for SPACE5-1: {len(space5_sizing_data)} parameters")
+            # Return a dataframe with Time and the selected SPACE5-1 columns
+            return epluszsz_data[selected_cols]
         else:
             print("No data for the above zone was found")
     except Exception as e:
         print(f"Error loading or parsing epluszsz.csv: {e}")
-    return space5_sizing_data
+        return None
 
 
 if __name__ == "__main__":

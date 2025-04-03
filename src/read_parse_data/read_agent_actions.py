@@ -76,6 +76,9 @@ def validate_agent_actions(file_path):
     else:
         print("\nAll setpoints satisfy the constraint: heating < cooling")
 
+    # Return the validated data
+    return df
+
 
 # Run the validation
 if __name__ == "__main__":
