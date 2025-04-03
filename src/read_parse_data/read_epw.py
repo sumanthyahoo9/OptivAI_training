@@ -6,6 +6,7 @@ This is to continuously inform the LLM as to what it's working in.
 
 import os
 import argparse
+import traceback
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -31,7 +32,7 @@ def validate_epw_file(file_path):
         # Read the EPW file
         # Skip the first 8 lines which contain header information
         data = []
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
             # Extract header info
@@ -257,8 +258,6 @@ def validate_epw_file(file_path):
 
     except Exception as e:
         print(f"Error validating EPW file: {str(e)}")
-        import traceback
-
         traceback.print_exc()
 
 
