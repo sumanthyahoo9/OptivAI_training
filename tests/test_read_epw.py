@@ -1,10 +1,69 @@
+"""
+This file tests the read_epw file which:
+Header lines matching EPW format specifications (location, design conditions, etc.)
+Sample data lines with realistic weather data values
+Mock DataFrames to simulate parsed EPW data
+
+Test Cases
+The suite includes tests for various aspects of EPW file validation:
+
+Basic File Validation
+
+test_file_exists_and_is_valid: Tests normal operation with a valid EPW file
+test_file_does_not_exist: Tests handling of non-existent files
+test_file_wrong_extension: Tests warning for files without the .epw extension
+test_file_read_error: Tests handling of file I/O errors
+
+
+Data Structure Validation
+
+test_incorrect_data_lines: Tests detection of incorrect number of data lines
+(EPW files should have 8760 or 8784 lines)
+test_missing_values: Tests detection of missing values in weather data
+
+
+Data Quality Validation
+
+test_time_consistency_issues: Tests detection of invalid month, day, or hour values
+test_extreme_weather_values: Tests detection of physically implausible weather values
+(e.g., extreme temperatures, negative wind speeds)
+
+
+Integration Testing
+test_integration_with_small_test_file: Tests with an actual temporary file created during the test
+
+
+
+Testing Approach
+The testing approach is comprehensive:
+
+Extensive Mocking:
+Mocked file I/O operations to control input data
+Mocked pandas DataFrame operations to control data analysis behavior
+Mocked matplotlib functions to prevent actual plot creation
+
+
+Granular Output Verification:
+Verified specific warning and error messages for each test case
+Checked for expected function behavior under various conditions
+
+
+Edge Case Coverage:
+Tested boundary conditions for weather parameters
+Tested error handling for file operations
+Tested validation of temporal consistency
+
+This test suite ensures that the EPW file validation function correctly
+identifies various issues in weather data files,
+which is critical for reliable building energy simulations.
+"""
+
 import unittest
 import os
 import io
 import sys
-import pandas as pd
-import numpy as np
 import tempfile
+import pandas as pd
 from unittest.mock import patch, mock_open
 
 # Import the function to test
@@ -111,7 +170,7 @@ class TestReadEpw(unittest.TestCase):
         mock_exists.return_value = True
 
         # Call function with non-EPW file
-        with patch("builtins.open", mock_open(read_data="")) as m:
+        with patch("builtins.open", mock_open(read_data="")) as _:
             validate_epw_file("file.txt")
 
         # Check output messages

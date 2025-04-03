@@ -130,7 +130,7 @@ class TestReadEpluszsz(unittest.TestCase):
             self.valid_data.to_csv(temp_file, index=False)
 
             # Call function with actual file
-            with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with patch("sys.stdout", new_callable=io.StringIO) as _:
                 result = parse_epluszsz_data(temp_file)
 
             # Check result is not None

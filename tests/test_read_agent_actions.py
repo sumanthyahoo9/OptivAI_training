@@ -184,7 +184,7 @@ class TestReadAgentActions(unittest.TestCase):
             self.valid_data.to_csv(temp_file, index=False)
 
             # Call function with actual file
-            with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            with patch("sys.stdout", new_callable=io.StringIO) as _:
                 result = validate_agent_actions(temp_file)
 
             # Check result

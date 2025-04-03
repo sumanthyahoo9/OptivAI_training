@@ -218,7 +218,8 @@ def create_combined_dataset(output_path="space5_training_data.csv", include_eplu
 
             space5_data.to_csv("space5_sizing_data.csv", index=False)
             print(
-                f"Saved SPACE5-1 sizing data to space5_sizing_data.csv: {space5_data.shape[0]} rows, {space5_data.shape[1]} columns"
+                f"Saved SPACE5-1 sizing data to space5_sizing_data.csv:"
+                f"{space5_data.shape[0]} rows, {space5_data.shape[1]} columns"
             )
             print("Note: This data represents daily patterns and was not merged with the time-series data.")
 

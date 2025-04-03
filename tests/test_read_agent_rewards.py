@@ -109,7 +109,7 @@ class TestReadAgentRewards(unittest.TestCase):
 
         # Expect a KeyError since the function doesn't check for column existence
         with self.assertRaises(KeyError):
-            result = validate_rewards("fake_path.csv")
+            _ = validate_rewards("fake_path.csv")
 
         # Check output messages - we should still see these before the error
         output = mock_stdout.getvalue()
@@ -240,7 +240,7 @@ class TestReadAgentRewards(unittest.TestCase):
                 self.valid_data.to_csv(temp_file, index=False)
 
                 # Call function with actual file
-                with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+                with patch("sys.stdout", new_callable=io.StringIO) as _:
                     result = validate_rewards(temp_file)
 
                 # Check result
