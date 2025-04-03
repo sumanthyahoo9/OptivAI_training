@@ -2,4 +2,6 @@
 max-complexity=50
 max-line-length = 125
 ignore = E203, W503
+per-file-ignores =
+    tests/test_read_epw.py: E501
 exclude = .git,__pycache__,build,dist
