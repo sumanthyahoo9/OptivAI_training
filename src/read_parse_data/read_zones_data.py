@@ -28,7 +28,7 @@ def validate_epjson_file(file_path):
 
     try:
         # Load the epJSON file
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         print("\nSuccessfully loaded JSON data from file")
