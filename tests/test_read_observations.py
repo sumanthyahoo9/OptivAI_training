@@ -13,9 +13,10 @@ Data with unrealistic electricity demand (negative or extremely high values)
 import unittest
 import os
 import io
+from unittest.mock import patch
 import pandas as pd
 import numpy as np
-from unittest.mock import patch
+import matplotlib.pyplot as plt
 
 # Import the function to test
 # Adjust the import path as needed for your project structure

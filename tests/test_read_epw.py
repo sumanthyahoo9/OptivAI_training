@@ -63,8 +63,9 @@ import os
 import io
 import sys
 import tempfile
-import pandas as pd
 from unittest.mock import patch, mock_open
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # Import the function to test
 # Adjust the import path as needed for your project structure
