@@ -27,6 +27,7 @@ dependencies = [
     "langgraph==0.3.5",
     "llama_models==0.1.5",
     "llama_stack==0.1.5.1",
+    "matplotlib==3.10.1",
     "numpy==2.2.3",
     "pandas==2.2.3",
     "peft==0.14.0",
