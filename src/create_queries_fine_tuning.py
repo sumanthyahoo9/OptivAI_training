@@ -6,8 +6,6 @@ import os
 from typing import List, Dict, Any
 import json
 import pandas as pd
-import numpy as np
-import random
 import openai
 
 def prepare_context_data(df: pd.DataFrame, row_idx: int, context_window: int = 24) -> Dict[str, Any]:
