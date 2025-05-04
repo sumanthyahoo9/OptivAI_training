@@ -1,26 +1,17 @@
 """
-Using OpenAI's API, this script generates query-response pairs to fine-tune an LLM
+Generate query-response pairs for fine-tuning
 """
 import time
-import json
-import random
+import os
 from typing import List, Dict, Any
+import json
 import pandas as pd
+import numpy as np
+import random
 import openai
 
-def prepare_context_data(df: pd.DataFrame, row_idx: int, 
-                        context_window: int = 24) -> Dict[str, Any]:
-    """
-    Extract relevant context from the dataset around a specific timestep.
-    
-    Args:
-        df: The training dataframe
-        row_idx: Index of the central row to focus on
-        context_window: How many timesteps before/after to include (24 = 6 hours at 15-min intervals)
-        
-    Returns:
-        Dictionary with contextual data
-    """
+def prepare_context_data(df: pd.DataFrame, row_idx: int, context_window: int = 24) -> Dict[str, Any]:
+    """Extract relevant context from the dataset around a specific timestep."""
     # Get window of data centered on the chosen index
     start_idx = max(0, row_idx - context_window)
     end_idx = min(len(df) - 1, row_idx + context_window)
@@ -56,32 +47,30 @@ def prepare_context_data(df: pd.DataFrame, row_idx: int,
             "indoor_temp_trend": "rising" if window_df['obs_air_temperature'].iloc[-1] > window_df['obs_air_temperature'].iloc[0] else "falling",
         },
         "metadata": {
-            # Extract metadata columns if they exist
-            "zone_volume": 447.68,  # From the previous epJSON analysis
-            "design_cooling_load": df.iloc[row_idx].get('space5_1_sizing_des_sens_cool_load', 5000),
-            "comfort_range": [20, 25]  # Default comfort range
+            "zone_volume": 447.68,
+            "comfort_range": [20, 25]
         }
     }
     
     return context
 
 def generate_llm_examples(
-    training_data_path: str = "space5_training_data.csv", 
-    num_examples: int = 500,
+    training_data_path: str,
+    num_examples: int = 1000, 
     output_file: str = "llm_enhanced_training_examples.jsonl",
-    api_key: str = None
+    api_key: str = None,
+    model_name: str = "gpt-3.5-turbo"
 ) -> List[Dict[str, Any]]:
-    """
-    Generate high-quality training examples using an LLM
-    
-    Args:
-        training_data_path: Path to the space5_training_data.csv
-        num_examples: Total number of examples to generate
-        output_file: Where to save the generated examples
-        api_key: OpenAI API key
-    """
+    """Generate high-quality training examples using an LLM"""
+    # Initialize OpenAI client with proper configuration
     if api_key:
-        openai.api_key = api_key
+        client = openai.OpenAI(api_key=api_key)
+    else:
+        # Try environment variable
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("No API key provided. Please provide an API key or set the OPENAI_API_KEY environment variable.")
+        client = openai.OpenAI(api_key=api_key)
     
     # Load the training data
     df = pd.read_csv(training_data_path)
@@ -116,7 +105,6 @@ def generate_llm_examples(
         
         for i in range(count):
             # Randomly select a row from the dataframe
-            # For better diversity, we could use stratified sampling by month/time of day
             idx = random.randint(0, len(df) - 1)
             
             # Prepare contextual data
@@ -155,7 +143,6 @@ Trends:
 
 Building metadata:
 - Zone volume: {context['metadata']['zone_volume']} m³
-- Design cooling load: {context['metadata']['design_cooling_load']} W
 - Comfort temperature range: {context['metadata']['comfort_range'][0]}-{context['metadata']['comfort_range'][1]}°C
 
 Guidelines based on question type:
@@ -170,9 +157,9 @@ Please generate only the question text. Make it specific, detailed, and directly
 """
             
             try:
-                # Call OpenAI API
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",  # or gpt-3.5-turbo
+                # Call OpenAI API using the new method
+                response = client.chat.completions.create(
+                    model=model_name,
                     messages=[
                         {"role": "system", "content": "You are an HVAC expert assistant that generates realistic questions about building control systems."},
                         {"role": "user", "content": prompt}
@@ -216,19 +203,18 @@ Trends:
 
 Building metadata:
 - Zone volume: {context['metadata']['zone_volume']} m³
-- Design cooling load: {context['metadata']['design_cooling_load']} W
 - Comfort temperature range: {context['metadata']['comfort_range'][0]}-{context['metadata']['comfort_range'][1]}°C
 
 Your answer should be technically accurate, detailed but concise, and directly address all aspects of the question.
 """
                 
-                answer_response = openai.ChatCompletion.create(
-                    model="gpt-4",  # or gpt-3.5-turbo
+                answer_response = client.chat.completions.create(
+                    model=model_name,
                     messages=[
                         {"role": "system", "content": "You are an HVAC expert assistant that provides accurate, technical answers about building control systems."},
                         {"role": "user", "content": answer_prompt}
                     ],
-                    temperature=0.3,  # Lower temperature for more consistent answers
+                    temperature=0.3,
                     max_tokens=600
                 )
                 
@@ -261,15 +247,16 @@ Your answer should be technically accurate, detailed but concise, and directly a
     print(f"Generated {len(examples)} examples and saved to {output_file}")
     return examples
 
-# Example usage
+# Main execution block
 if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Generate LLM-enhanced training examples from HVAC data')
     parser.add_argument('--data', required=True, help='Path to space5_training_data.csv')
     parser.add_argument('--output', default='llm_enhanced_training_examples.jsonl', help='Output file path')
-    parser.add_argument('--num-examples', type=int, default=500, help='Total number of examples to generate')
+    parser.add_argument('--num-examples', type=int, default=100, help='Total number of examples to generate')
     parser.add_argument('--api-key', required=True, help='OpenAI API key')
+    parser.add_argument('--model', default='gpt-3.5-turbo', help='OpenAI model to use (gpt-3.5-turbo or gpt-4)')
     
     args = parser.parse_args()
     
@@ -277,5 +264,6 @@ if __name__ == "__main__":
         args.data,
         num_examples=args.num_examples,
         output_file=args.output,
-        api_key=args.api_key
+        api_key=args.api_key,
+        model_name=args.model
     )

@@ -48,7 +48,8 @@ This guide will help you generate high-quality training examples for HVAC contro
 
 4. **Install required libraries**:
    ```
-   pip install pandas numpy openai
+   pip install pandas numpy
+   pip install --upgrade openai
    ```
 
 ## 4. Create the Script File
