@@ -84,6 +84,7 @@ logs/
 wandb/
 *.h5
 *.hdf5
+*.jsonl
 *.npy
 *.npz
 *.pkl
