@@ -85,6 +85,7 @@ wandb/
 *.h5
 *.hdf5
 *.jsonl
+*.json
 *.npy
 *.npz
 *.pkl
