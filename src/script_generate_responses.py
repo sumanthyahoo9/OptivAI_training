@@ -34,7 +34,6 @@ def generate_responses(
     )
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     
-    # CRITICAL: Make sure the tokenizer has proper tokens set
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
@@ -52,61 +51,57 @@ def generate_responses(
         query = example['query']
         enriched_query = generate_enriched_prompt(query, reference_csv)
         
-        # CRITICAL CHANGE: Match EXACTLY the format used during training
-        # Your training script used: "<s>[INST] <<SYS>>\nYou are an HVAC expert assistant.\n<</SYS>>\n\n{example['query']} [/INST] {example['response']}</s>"
-        # So we need to match this format exactly
+        # Match the training format exactly
         prompt = f"<s>[INST] <<SYS>>\nYou are an HVAC expert assistant.\n<</SYS>>\n\n{enriched_query} [/INST]"
         
-        # Tokenize without adding special tokens (we've already added them)
         inputs = tokenizer(
             prompt, 
             return_tensors="pt",
-            add_special_tokens=False  # Changed to False since we manually added <s>
+            add_special_tokens=False
         ).to(model.device)
         
-        # Debug print to see what we're sending
-        if i == 0:  # Only for first example
-            print(f"First prompt being sent: {prompt[:200]}...")
-            print(f"Input shape: {inputs.input_ids.shape}")
+        # Try adding bad_words_ids to prevent unwanted tokens
+        bad_words_ids = []
+        unwanted_tokens = ['<|logistics|>', '<|welcome|>', '<|agent|>', '[WELCOME]']
+        for token in unwanted_tokens:
+            token_ids = tokenizer.encode(token, add_special_tokens=False)
+            if token_ids:
+                bad_words_ids.append(token_ids)
         
         with torch.no_grad():
             outputs = model.generate(
-                inputs.input_ids,  # Use input_ids directly
+                inputs.input_ids,
                 max_new_tokens=1024,
-                temperature=0.7,  # Increased for more variability
+                temperature=0.7,
                 do_sample=True,
                 top_p=0.95,
                 repetition_penalty=1.1,
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
-                attention_mask=inputs.attention_mask
+                attention_mask=inputs.attention_mask,
+                bad_words_ids=bad_words_ids if bad_words_ids else None
             )
         
-        # Extract only the generated tokens (not the input)
+        # Extract the generated part
         input_length = inputs.input_ids.shape[1]
         generated_tokens = outputs[0][input_length:]
         
-        # Decode only the generated part
+        # Decode only the generated tokens
         response = tokenizer.decode(generated_tokens, skip_special_tokens=True)
         
-        # If still empty, try alternative decoding
-        if not response.strip():
-            # Try decoding the full output and extracting after [/INST]
-            full_output = tokenizer.decode(outputs[0], skip_special_tokens=False)
-            if "[/INST]" in full_output:
-                response = full_output.split("[/INST]")[-1].strip()
-                # Remove any trailing </s> or other tokens
-                response = response.replace("</s>", "").strip()
-        
-        # Final cleaning
+        # Clean the response
         response = clean_response(response)
         
-        # Debug information for empty responses
-        if not response.strip():
-            print(f"\nWarning: Empty response for query {i}")
-            print(f"Query: {query[:100]}...")
-            print(f"Generated tokens: {generated_tokens.tolist()[:10]}...")
-            print(f"Full decoded output: {tokenizer.decode(outputs[0])[:200]}...")
+        # Additional check: if response still starts with unwanted content, extract actual response
+        if response.startswith('<|') or 'agent_name=' in response[:50]:
+            # Try to find where the actual response starts
+            # Look for the first sentence that doesn't contain these tokens
+            sentences = response.split('. ')
+            clean_sentences = []
+            for sentence in sentences:
+                if not any(token in sentence for token in ['<|', '|>', 'agent_name=', '[WELCOME']):
+                    clean_sentences.append(sentence)
+            response = '. '.join(clean_sentences).strip()
         
         # Save the response
         output_file = os.path.join(output_dir, f"response_{i}.json")
@@ -116,25 +111,58 @@ def generate_responses(
                 "response": response,
                 "ground_truth": example.get('response', '')
             }, f, indent=2)
-    
-    print(f"Generated responses saved to {output_dir}/")
 
 def clean_response(response):
     """
-    Clean the response from the LLM by removing certain tokens
+    Clean the response from the LLM by removing unwanted tokens and formatting
     """
-    # Remove special tokens
-    special_tokens = ['<s>', '</s>', '[INST]', '[/INST]', '<<SYS>>', '<</SYS>>', '<<RESP>>', '<|end_of_text|>']
     
-    cleaned = response
+    # First, handle the literal \n that might appear
+    cleaned = response.replace('\\n', '\n')
+    
+    # Remove common LLM special tokens
+    special_tokens = [
+        '<s>', '</s>', '[INST]', '[/INST]', '<<SYS>>', '<</SYS>>', 
+        '<<RESP>>', '<|end_of_text|>', '<|endoftext|>'
+    ]
+    
     for token in special_tokens:
         cleaned = cleaned.replace(token, "")
     
-    # Remove any repeated newlines
-    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    # Remove any logistics/agent/welcome tokens that shouldn't be there
+    # Pattern 1: <|something|something>
+    cleaned = re.sub(r'<\|[^>]*\|[^>]*>', '', cleaned)
     
-    # Strip whitespace
-    return cleaned.strip()
+    # Pattern 2: <|something|>
+    cleaned = re.sub(r'<\|[^>]*\|>', '', cleaned)
+    
+    # Pattern 3: Any remaining < > brackets with pipes
+    cleaned = re.sub(r'<[^>]*\|[^>]*>', '', cleaned)
+    
+    # Remove [WELCOME] or similar tags
+    cleaned = re.sub(r'\[WELCOME\]', '', cleaned)
+    cleaned = re.sub(r'\[/WELCOME\]', '', cleaned)
+    
+    # Remove any text that looks like role-play setup
+    # This pattern catches things like "agent_name=HVAC Expert Assistant"
+    cleaned = re.sub(r'agent_name=[^>]*', '', cleaned)
+    
+    # If the response starts with a greeting that wasn't in training, remove it
+    greeting_patterns = [
+        r'^Hi! I\'m the HVAC expert assistant[^.]*\.',
+        r'^Hello! I\'m here to help[^.]*\.',
+        r'^Welcome! [^.]*\.',
+    ]
+    
+    for pattern in greeting_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    
+    # Clean up extra whitespace
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    cleaned = re.sub(r'^\s+', '', cleaned)
+    cleaned = re.sub(r'\s+$', '', cleaned)
+    
+    return cleaned
 
 def get_csv_context(query, reference_csv):
     """
