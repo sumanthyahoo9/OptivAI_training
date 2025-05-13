@@ -89,6 +89,8 @@ wandb/
 *.pkl
 *.png
 *.epw
+*.json
+*.jsonl
 data/raw/
 data/processed/
 
