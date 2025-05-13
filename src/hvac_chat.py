@@ -21,6 +21,10 @@ def setup_model(model_path, tokenizer_path):
     )
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     
+    # Add pad token if not present
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    
     print("Model loaded successfully!")
     return model, tokenizer
 
@@ -41,51 +45,100 @@ def get_csv_context(query, reference_csv, conversation_history):
         relevant_data = reference_csv[reference_csv['hour'] == hour]
         if len(relevant_data) > 0:
             latest_data = relevant_data.iloc[-1]
-            return {
-                'indoor_temp': latest_data['obs_air_temperature'],
-                'outdoor_temp': latest_data['obs_outdoor_temperature'],
-                'heating_setpoint': latest_data['action_Heating_Setpoint_RL'],
-                'cooling_setpoint': latest_data['action_Cooling_Setpoint_RL']
-            }
+        else:
+            latest_data = reference_csv.iloc[-1]
+    else:
+        # Return latest data as fallback
+        latest_data = reference_csv.iloc[-1]
     
-    # Return latest data as fallback
-    latest_data = reference_csv.iloc[-1]
+    # Extract values and handle NaN - same as inference script
+    heating_sp = latest_data["action_Heating_Setpoint_RL"]
+    cooling_sp = latest_data["action_Cooling_Setpoint_RL"]
+
+    # Check for NaN and use simulated values as fallback
+    nan_detected = False
+    if pd.isna(heating_sp) or pd.isna(cooling_sp):
+        nan_detected = True
+        heating_sp = 23.25
+        cooling_sp = 30.0
+    
     return {
         'indoor_temp': latest_data['obs_air_temperature'],
         'outdoor_temp': latest_data['obs_outdoor_temperature'],
-        'heating_setpoint': latest_data['action_Heating_Setpoint_RL'],
-        'cooling_setpoint': latest_data['action_Cooling_Setpoint_RL']
+        'heating_setpoint': heating_sp,
+        'cooling_setpoint': cooling_sp,
+        "nan_detected": nan_detected
     }
 
 def generate_enriched_prompt(query, reference_csv, conversation_history):
     """Create an enriched prompt with CSV context and conversation history"""
     csv_context = get_csv_context(query, reference_csv, conversation_history)
     
-    enriched_prompt = f"""Current building conditions (SPACE5-1):
+    # Match the training format exactly - same as inference script
+    context_info = f"""Current building conditions (SPACE5-1):
 - Indoor temperature: {csv_context['indoor_temp']:.1f}°C
 - Outdoor temperature: {csv_context['outdoor_temp']:.1f}°C
 - Current heating setpoint: {csv_context['heating_setpoint']:.1f}°C
-- Current cooling setpoint: {csv_context['cooling_setpoint']:.1f}°C
-
-Question: {query}
-
-Please provide a detailed response considering these current conditions."""
+- Current cooling setpoint: {csv_context['cooling_setpoint']:.1f}°C"""
     
-    return enriched_prompt
-
-def format_conversation_history(conversation_history):
-    """Format the conversation history for inclusion in the prompt"""
-    if not conversation_history:
-        return ""
-        
-    formatted_history = "\n\nPrevious conversation:\n"
-    for item in conversation_history:
-        if item["role"] == "user":
-            formatted_history += f"User: {item['content']}\n"
-        else:
-            formatted_history += f"Assistant: {item['content']}\n"
+    # Add the NaN note if needed
+    if csv_context.get('nan_detected', False):
+        context_info += "\n\nNote: Using default setpoint values (23.25°C heating, 30°C cooling) as actual values were not available."
     
-    return formatted_history
+    # Combine context with query - matching training format
+    enriched_query = f"{context_info}\n\n{query}"
+    
+    return enriched_query
+
+def clean_response(response):
+    """
+    Clean the response from the LLM by removing unwanted tokens and formatting
+    """
+    # First, handle the literal \n that might appear
+    cleaned = response.replace('\\n', '\n')
+    
+    # Remove common LLM special tokens
+    special_tokens = [
+        '<s>', '</s>', '[INST]', '[/INST]', '<<SYS>>', '<</SYS>>', 
+        '<<RESP>>', '<|end_of_text|>', '<|endoftext|>'
+    ]
+    
+    for token in special_tokens:
+        cleaned = cleaned.replace(token, "")
+    
+    # Remove any logistics/agent/welcome tokens that shouldn't be there
+    # Pattern 1: <|something|something>
+    cleaned = re.sub(r'<\|[^>]*\|[^>]*>', '', cleaned)
+    
+    # Pattern 2: <|something|>
+    cleaned = re.sub(r'<\|[^>]*\|>', '', cleaned)
+    
+    # Pattern 3: Any remaining < > brackets with pipes
+    cleaned = re.sub(r'<[^>]*\|[^>]*>', '', cleaned)
+    
+    # Remove [WELCOME] or similar tags
+    cleaned = re.sub(r'\[WELCOME\]', '', cleaned)
+    cleaned = re.sub(r'\[/WELCOME\]', '', cleaned)
+    
+    # Remove any text that looks like role-play setup
+    cleaned = re.sub(r'agent_name=[^>]*', '', cleaned)
+    
+    # If the response starts with a greeting that wasn't in training, remove it
+    greeting_patterns = [
+        r'^Hi! I\'m the HVAC expert assistant[^.]*\.',
+        r'^Hello! I\'m here to help[^.]*\.',
+        r'^Welcome! [^.]*\.',
+    ]
+    
+    for pattern in greeting_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    
+    # Clean up extra whitespace
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    cleaned = re.sub(r'^\s+', '', cleaned)
+    cleaned = re.sub(r'\s+$', '', cleaned)
+    
+    return cleaned
 
 def interactive_chat(model_path, tokenizer_path, reference_csv_path):
     """
@@ -121,38 +174,60 @@ def interactive_chat(model_path, tokenizer_path, reference_csv_path):
         conversation_history.append({"role": "user", "content": user_input})
         
         try:
-            # Generate enriched prompt with context and history
+            # Generate enriched prompt with context - using the same function as inference
             enriched_query = generate_enriched_prompt(user_input, reference_csv, conversation_history)
             
-            # Add conversation history context if available
-            history_context = format_conversation_history(conversation_history[:-1])  # Exclude current query
+            # Match the training format exactly - same as inference
+            system_prompt = "You are an HVAC expert assistant."
+            prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n{enriched_query} [/INST]"
             
-            # Create the full system prompt
-            system_prompt = "You are an HVAC expert assistant. Provide helpful, detailed answers about HVAC systems, energy efficiency, and building climate control."
+            # Tokenize - same as inference
+            inputs = tokenizer(
+                prompt, 
+                return_tensors="pt",
+                add_special_tokens=False
+            ).to(model.device)
             
-            # Construct the full prompt
-            prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n{enriched_query}{history_context} [/INST]"
-            
-            # Tokenize and generate
-            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+            # Try adding bad_words_ids to prevent unwanted tokens - same as inference
+            bad_words_ids = []
+            unwanted_tokens = ['<|logistics|>', '<|welcome|>', '<|agent|>', '[WELCOME]']
+            for token in unwanted_tokens:
+                token_ids = tokenizer.encode(token, add_special_tokens=False)
+                if token_ids:
+                    bad_words_ids.append(token_ids)
             
             with torch.no_grad():
                 outputs = model.generate(
-                    **inputs,
-                    max_new_tokens=512,
+                    inputs.input_ids,
+                    max_new_tokens=1024,  # Changed from 512 to match inference
                     temperature=0.7,
                     do_sample=True,
-                    top_p=0.9
+                    top_p=0.95,  # Changed from 0.9 to match inference
+                    repetition_penalty=1.1,  # Added to match inference
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
+                    attention_mask=inputs.attention_mask,
+                    bad_words_ids=bad_words_ids if bad_words_ids else None
                 )
             
-            # Get the response and clean it
-            response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+            # Extract only the generated part - same as inference
+            input_length = inputs.input_ids.shape[1]
+            generated_tokens = outputs[0][input_length:]
             
-            # Extract only the assistant's response
-            if "[/INST]" in response:
-                response = response.split("[/INST]")[-1].strip()
-            else:
-                response = response.split("assistant\n")[-1].strip()
+            # Decode only the generated tokens
+            response = tokenizer.decode(generated_tokens, skip_special_tokens=True)
+            
+            # Clean the response - using the same function as inference
+            response = clean_response(response)
+            
+            # Additional check: if response still starts with unwanted content
+            if response.startswith('<|') or 'agent_name=' in response[:50]:
+                sentences = response.split('. ')
+                clean_sentences = []
+                for sentence in sentences:
+                    if not any(token in sentence for token in ['<|', '|>', 'agent_name=', '[WELCOME']):
+                        clean_sentences.append(sentence)
+                response = '. '.join(clean_sentences).strip()
             
             # Print the response
             print(f"\nHVAC Assistant: {response}")
