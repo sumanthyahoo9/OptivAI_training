@@ -75,6 +75,8 @@ models/
 *.safetensors
 checkpoint*/
 runs/
+data
+_stable_baselines3_version
 
 # Data files
 *.csv
@@ -91,6 +93,7 @@ wandb/
 *.epw
 *.json
 *.jsonl
+*.txt
 data/raw/
 data/processed/
 
